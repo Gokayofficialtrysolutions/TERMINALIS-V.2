@@ -28,6 +28,14 @@ Write-Host "📦 Installing TERMINALIS-V.2 System to: $InstallPath" -ForegroundC
 Write-Host "⬇️  Downloading system files..." -ForegroundColor Yellow
 $ProgressPreference = 'SilentlyContinue'
 
+# Create directory structure first
+$Directories = @("models", "agents", "tools", "data", "logs", "scripts", "src")
+foreach ($dir in $Directories) {
+    if (!(Test-Path $dir)) {
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+    }
+}
+
 # Download main system files
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Gokayofficialtrysolutions/TERMINALIS-V.2/main/agentic_ai_system.py" -OutFile "agentic_ai_system.py"
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Gokayofficialtrysolutions/TERMINALIS-V.2/main/advanced_ui.py" -OutFile "advanced_ui.py"
@@ -38,14 +46,6 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Gokayofficialtrysoluti
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Gokayofficialtrysolutions/TERMINALIS-V.2/main/performance_monitor.py" -OutFile "performance_monitor.py"
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Gokayofficialtrysolutions/TERMINALIS-V.2/main/ascii_interface.py" -OutFile "ascii_interface.py"
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Gokayofficialtrysolutions/TERMINALIS-V.2/main/demo.py" -OutFile "demo.py"
-
-# Create directory structure
-$Directories = @("models", "agents", "tools", "data", "logs", "scripts")
-foreach ($dir in $Directories) {
-    if (!(Test-Path $dir)) {
-        New-Item -ItemType Directory -Path $dir -Force | Out-Null
-    }
-}
 
 # Check for Python
 Write-Host "🐍 Checking Python installation..." -ForegroundColor Yellow
