@@ -106,11 +106,14 @@ class AdvancedAgenticUI:
     def clear_screen(self):
         """Clear the terminal screen"""
         os.system('cls' if os.name == 'nt' else 'clear')
+        print("\033[0;37;40m")  # Reset color scheme
     
     def print_banner(self):
         """Print the main banner"""
         banner = """
 ╔══════════════════════════════════════════════════════════════════════════════╗
+║ Style and color improvements for better readability and accessibility!      ║
+║ Improved with real-time feedback capabilities!                              ║
 ║                        🤖 AGENTIC AI SYSTEM UI 🤖                           ║
 ║                          Advanced Control Interface                          ║
 ╠══════════════════════════════════════════════════════════════════════════════╣

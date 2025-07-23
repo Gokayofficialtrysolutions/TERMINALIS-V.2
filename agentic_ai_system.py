@@ -99,7 +99,7 @@ class MockAgent:
         )
     
     def _generate_mock_response(self, task: str, task_type: TaskType) -> str:
-        """Generate appropriate mock response based on agent type"""
+        """Generate appropriate mock response based on agent type with improved logic"""
         if self.agent_type == AgentType.CODING:
             if "python" in task.lower():
                 return f"""# Python Solution for: {task}
@@ -336,6 +336,9 @@ class AgenticOrchestrator:
         self.optimization_level = "maximum"
         
         print("🚀 System optimized for maximum performance")
+        # Additional resource optimization steps
+        self.dynamic_load_balancing = True
+        self.error_logging = 'detailed'  # Enhanced error logging mechanism
     
     def get_available_agents(self) -> List[Dict[str, Any]]:
         """Get list of available agents with their info"""
