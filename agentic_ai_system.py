@@ -267,31 +267,55 @@ class AgenticOrchestrator:
         self._optimize_resources()
     
     def _initialize_agents(self):
-        """Initialize the agent pool"""
+        """Initialize the agent pool with latest open-source models"""
         agent_configs = [
             AgentConfig(
-                name="Coder-CodeGen25",
+                name="WizardCoder-34B",
                 agent_type=AgentType.CODING,
-                specialties=["python", "javascript", "pinescript", "general_coding"],
-                model_path=f"{self.models_dir}/codegen-2.5-7b-mono.bin"
+                specialties=["python", "javascript", "rust", "go", "cpp", "java", "typescript"],
+                model_path=f"{self.models_dir}/WizardLM-34B-V1.0.gguf",
+                temperature=0.2,
+                max_tokens=4096
             ),
             AgentConfig(
-                name="Reasoner-Qwen3",
+                name="CodeLlama-13B-Instruct",
+                agent_type=AgentType.CODING,
+                specialties=["code_review", "debugging", "optimization", "refactoring"],
+                model_path=f"{self.models_dir}/CodeLlama-13B-Instruct-GGUF",
+                temperature=0.1,
+                max_tokens=8192
+            ),
+            AgentConfig(
+                name="Qwen3-8B-Instruct",
                 agent_type=AgentType.REASONING,
-                specialties=["analysis", "logic", "problem_solving", "mathematics"],
-                model_path=f"{self.models_dir}/qwen2.5-3b-instruct.bin"
+                specialties=["analysis", "logic", "problem_solving", "mathematics", "research"],
+                model_path=f"{self.models_dir}/Qwen3-8B-Instruct.gguf",
+                temperature=0.3,
+                max_tokens=6144
             ),
             AgentConfig(
-                name="Creative-OpenHermes",
+                name="Phi-4-Advanced",
+                agent_type=AgentType.REASONING,
+                specialties=["complex_reasoning", "scientific_analysis", "academic_research"],
+                model_path=f"{self.models_dir}/Phi-4.gguf",
+                temperature=0.4,
+                max_tokens=4096
+            ),
+            AgentConfig(
+                name="OpenHermes-2.5-Mistral-7B",
                 agent_type=AgentType.CREATIVE,
-                specialties=["creative_writing", "storytelling", "brainstorming", "marketing"],
-                model_path=f"{self.models_dir}/openhermes-2.5-mistral-7b.bin"
+                specialties=["creative_writing", "storytelling", "brainstorming", "marketing", "content_creation"],
+                model_path=f"{self.models_dir}/OpenHermes-2.5-Mistral-7B.gguf",
+                temperature=0.8,
+                max_tokens=3072
             ),
             AgentConfig(
-                name="General-Assistant",
+                name="DialoGPT-Large-Conversational",
                 agent_type=AgentType.GENERAL,
-                specialties=["conversation", "general_queries", "information", "support"],
-                model_path=f"{self.models_dir}/llama-2-7b-chat.bin"
+                specialties=["conversation", "dialogue", "chat", "natural_interaction", "support"],
+                model_path=f"{self.models_dir}/DialoGPT-large.gguf",
+                temperature=0.7,
+                max_tokens=2048
             )
         ]
         

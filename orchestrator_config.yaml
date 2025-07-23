@@ -19,70 +19,71 @@ performance:
   confidence_threshold: 0.85
   quality_assurance: "strict"
 
-# Advanced Agent Configuration
+# Advanced Agent Configuration - Latest Open Source Models
 agents:
   coding_specialists:
-    - name: "Python-Master-Agent"
+    - name: "WizardCoder-34B"
       type: "coding"
-      model: "codegen-2.5-7b-mono"
-      specialties: ["python", "django", "flask", "fastapi", "asyncio", "pandas", "numpy"]
+      model: "WizardLM-34B-V1.0"
+      model_format: "GGUF"
+      specialties: ["python", "javascript", "rust", "go", "cpp", "java", "typescript", "advanced_algorithms"]
       power_level: 10
+      temperature: 0.2
+      max_tokens: 4096
+      context_length: 32768
       
-    - name: "JavaScript-Expert-Agent"
+    - name: "CodeLlama-13B-Instruct"
       type: "coding"
-      model: "codegen-js-6b"
-      specialties: ["javascript", "typescript", "react", "nodejs", "vue", "angular"]
+      model: "CodeLlama-13B-Instruct"
+      model_format: "GGUF"
+      specialties: ["code_review", "debugging", "optimization", "refactoring", "documentation"]
       power_level: 10
+      temperature: 0.1
+      max_tokens: 8192
+      context_length: 16384
       
-    - name: "Systems-Programming-Agent"
-      type: "coding"
-      model: "code-llama-7b"
-      specialties: ["rust", "go", "c++", "c", "systems", "performance"]
-      power_level: 10
-      
-    - name: "Web-Development-Agent"
-      type: "coding"
-      model: "codegen-web-7b"
-      specialties: ["html", "css", "sass", "tailwind", "bootstrap", "responsive"]
-      power_level: 9
-      
-    - name: "Database-Expert-Agent"
-      type: "coding"
-      model: "sql-coder-7b"
-      specialties: ["postgresql", "mysql", "mongodb", "redis", "elasticsearch"]
-      power_level: 9
-      
-    - name: "DevOps-Automation-Agent"
-      type: "infrastructure"
-      model: "devops-llama-7b"
-      specialties: ["docker", "kubernetes", "terraform", "ansible", "ci_cd", "aws", "azure"]
-      power_level: 9
-      
-    - name: "AI-ML-Specialist-Agent"
-      type: "ai_ml"
-      model: "ml-coder-13b"
-      specialties: ["pytorch", "tensorflow", "scikit-learn", "transformers", "cv", "nlp"]
-      power_level: 10
-
   reasoning_agents:
-    - name: "Logic-Master-Agent"
+    - name: "Qwen3-8B-Instruct"
       type: "reasoning"
-      model: "qwen2.5-14b-instruct"
-      specialties: ["logic", "mathematics", "algorithms", "optimization"]
+      model: "Qwen3-8B-Instruct"
+      model_format: "GGUF"
+      specialties: ["analysis", "logic", "problem_solving", "mathematics", "research", "complex_reasoning"]
       power_level: 10
+      temperature: 0.3
+      max_tokens: 6144
+      context_length: 32768
       
-    - name: "Architecture-Designer-Agent"
+    - name: "Phi-4-Advanced"
       type: "reasoning"
-      model: "architect-llama-13b"
-      specialties: ["system_design", "architecture", "patterns", "scalability"]
+      model: "Phi-4"
+      model_format: "GGUF"
+      specialties: ["complex_reasoning", "scientific_analysis", "academic_research", "mathematical_proofs"]
       power_level: 10
+      temperature: 0.4
+      max_tokens: 4096
+      context_length: 16384
 
   creative_agents:
-    - name: "Creative-Coder-Agent"
+    - name: "OpenHermes-2.5-Mistral-7B"
       type: "creative"
-      model: "creative-hermes-13b"
-      specialties: ["creative_coding", "ui_ux", "animations", "graphics"]
+      model: "OpenHermes-2.5-Mistral-7B"
+      model_format: "GGUF"
+      specialties: ["creative_writing", "storytelling", "brainstorming", "marketing", "content_creation"]
       power_level: 9
+      temperature: 0.8
+      max_tokens: 3072
+      context_length: 8192
+      
+  conversational_agents:
+    - name: "DialoGPT-Large-Conversational"
+      type: "general"
+      model: "DialoGPT-large"
+      model_format: "GGUF"
+      specialties: ["conversation", "dialogue", "chat", "natural_interaction", "support"]
+      power_level: 8
+      temperature: 0.7
+      max_tokens: 2048
+      context_length: 4096
 
 # Advanced Orchestration Strategies
 orchestration:

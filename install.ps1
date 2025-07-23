@@ -72,31 +72,50 @@ python -m pip install gradio streamlit
 python -m pip install opencv-python pillow
 python -m pip install scikit-learn pandas numpy matplotlib seaborn
 
-# Download and setup AI models with Safetensors
-Write-Host "🤖 Setting up AI models with Safetensors..." -ForegroundColor Yellow
+# Download and setup latest open-source AI models
+Write-Host "🤖 Setting up latest open-source AI models..." -ForegroundColor Yellow
 python -c "
 import sys
+import asyncio
 sys.path.append('src')
-from model_manager import ModelManager
+from model_manager_latest import LatestModelManager
 
-# Initialize model manager
-model_mgr = ModelManager()
+# Initialize latest model manager
+model_mgr = LatestModelManager()
 
 # Show available models
-print('🤖 Available Models:')
-model_mgr.show_system_info()
+print('🤖 Latest Open-Source Models Available:')
+model_mgr.show_model_status()
 
-# Download essential models
-essential_models = ['bert-base-uncased', 'distilbert-base-uncased', 'sentence-transformers/all-MiniLM-L6-v2']
-print('📥 Downloading essential models...')
-results = model_mgr.download_multiple_models(essential_models, max_workers=2)
+# Check system compatibility
+compatibility = model_mgr.check_compatibility()
+print('\n💻 System Compatibility:')
+print(f'RAM: {compatibility[\"system_info\"][\"ram_gb\"]} GB')
+print(f'Storage: {compatibility[\"system_info\"][\"disk_free_gb\"]} GB')
+print(f'Compatible: {\"✅ Yes\" if compatibility[\"compatible\"] else \"❌ Limited\"}')
 
-# Show download results
-for model, success in results.items():
-    status = '✅ Success' if success else '❌ Failed'
-    print(f'{status}: {model}')
+# Download essential models asynchronously
+async def setup_models():
+    print('\n📥 Downloading essential models...')
+    results = await model_mgr.download_essential_models()
+    
+    print('\n📊 Download Results:')
+    for model, success in results.items():
+        status = '✅ Success' if success else '❌ Failed'
+        print(f'{status}: {model}')
+    
+    # Save configuration
+    model_mgr.save_config()
+    print('\n🎉 Latest model setup complete!')
+    return results
 
-print('🎉 Model setup complete!')
+# Run the async setup
+if __name__ == '__main__':
+    try:
+        results = asyncio.run(setup_models())
+    except Exception as e:
+        print(f'⚠️ Model setup encountered issues: {e}')
+        print('System will continue with basic functionality')
 "
 
 # Create desktop shortcut
