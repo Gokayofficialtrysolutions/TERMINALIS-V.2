@@ -29,12 +29,15 @@ Write-Host "⬇️  Downloading system files..." -ForegroundColor Yellow
 $ProgressPreference = 'SilentlyContinue'
 
 # Download main system files
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Gokayofficialtrysolutions/TERMINALIS-V.2/main/src/main.py" -OutFile "main.py"
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Gokayofficialtrysolutions/TERMINALIS-V.2/main/agentic_ai_system.py" -OutFile "agentic_ai_system.py"
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Gokayofficialtrysolutions/TERMINALIS-V.2/main/advanced_ui.py" -OutFile "advanced_ui.py"
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Gokayofficialtrysolutions/TERMINALIS-V.2/main/requirements.txt" -OutFile "requirements.txt"
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Gokayofficialtrysolutions/TERMINALIS-V.2/main/config.yaml" -OutFile "config.yaml"
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Gokayofficialtrysolutions/TERMINALIS-V.2/main/setup.py" -OutFile "setup.py"
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Gokayofficialtrysolutions/TERMINALIS-V.2/main/agents/agent_manager.py" -OutFile "agents/agent_manager.py"
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Gokayofficialtrysolutions/TERMINALIS-V.2/main/tools/tool_manager.py" -OutFile "tools/tool_manager.py"
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Gokayofficialtrysolutions/TERMINALIS-V.2/main/config_manager.py" -OutFile "config_manager.py"
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Gokayofficialtrysolutions/TERMINALIS-V.2/main/performance_monitor.py" -OutFile "performance_monitor.py"
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Gokayofficialtrysolutions/TERMINALIS-V.2/main/ascii_interface.py" -OutFile "ascii_interface.py"
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Gokayofficialtrysolutions/TERMINALIS-V.2/main/demo.py" -OutFile "demo.py"
 
 # Create directory structure
 $Directories = @("models", "agents", "tools", "data", "logs", "scripts")
@@ -72,58 +75,15 @@ python -m pip install gradio streamlit
 python -m pip install opencv-python pillow
 python -m pip install scikit-learn pandas numpy matplotlib seaborn
 
-# Download and setup latest open-source AI models
-Write-Host "🤖 Setting up latest open-source AI models..." -ForegroundColor Yellow
-python -c "
-import sys
-import asyncio
-sys.path.append('src')
-from model_manager_latest import LatestModelManager
-
-# Initialize latest model manager
-model_mgr = LatestModelManager()
-
-# Show available models
-print('🤖 Latest Open-Source Models Available:')
-model_mgr.show_model_status()
-
-# Check system compatibility
-compatibility = model_mgr.check_compatibility()
-print('\n💻 System Compatibility:')
-print(f'RAM: {compatibility[\"system_info\"][\"ram_gb\"]} GB')
-print(f'Storage: {compatibility[\"system_info\"][\"disk_free_gb\"]} GB')
-print(f'Compatible: {\"✅ Yes\" if compatibility[\"compatible\"] else \"❌ Limited\"}')
-
-# Download essential models asynchronously
-async def setup_models():
-    print('\n📥 Downloading essential models...')
-    results = await model_mgr.download_essential_models()
-    
-    print('\n📊 Download Results:')
-    for model, success in results.items():
-        status = '✅ Success' if success else '❌ Failed'
-        print(f'{status}: {model}')
-    
-    # Save configuration
-    model_mgr.save_config()
-    print('\n🎉 Latest model setup complete!')
-    return results
-
-# Run the async setup
-if __name__ == '__main__':
-    try:
-        results = asyncio.run(setup_models())
-    except Exception as e:
-        print(f'⚠️ Model setup encountered issues: {e}')
-        print('System will continue with basic functionality')
-"
+# System is ready - skip model setup for now
+Write-Host "🤖 System setup complete - models can be configured after installation" -ForegroundColor Yellow
 
 # Create desktop shortcut
 Write-Host "🖥️  Creating desktop shortcut..." -ForegroundColor Yellow
 $WScriptShell = New-Object -ComObject WScript.Shell
 $Shortcut = $WScriptShell.CreateShortcut("$env:USERPROFILE\Desktop\TERMINALIS-V.2.lnk")
 $Shortcut.TargetPath = "python"
-$Shortcut.Arguments = "`"$InstallPath\main.py`""
+$Shortcut.Arguments = "`"$InstallPath\agentic_ai_system.py`""
 $Shortcut.WorkingDirectory = $InstallPath
 $Shortcut.IconLocation = "python.exe"
 $Shortcut.Description = "TERMINALIS-V.2 Agentic AI System"
@@ -133,7 +93,7 @@ $Shortcut.Save()
 $StartMenuPath = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs"
 $StartMenuShortcut = $WScriptShell.CreateShortcut("$StartMenuPath\TERMINALIS-V.2.lnk")
 $StartMenuShortcut.TargetPath = "python"
-$StartMenuShortcut.Arguments = "`"$InstallPath\main.py`""
+$StartMenuShortcut.Arguments = "`"$InstallPath\agentic_ai_system.py`""
 $StartMenuShortcut.WorkingDirectory = $InstallPath
 $StartMenuShortcut.IconLocation = "python.exe"
 $StartMenuShortcut.Description = "TERMINALIS-V.2 Agentic AI System"
@@ -156,7 +116,7 @@ Write-Host "📋 Start menu entry added" -ForegroundColor White
 Write-Host ""
 Write-Host "🚀 To start the system:" -ForegroundColor Cyan
 Write-Host "   1. Use the desktop shortcut" -ForegroundColor White
-Write-Host "   2. Or run: python `"$InstallPath\main.py`"" -ForegroundColor White
+Write-Host "   2. Or run: python `"$InstallPath\agentic_ai_system.py`"" -ForegroundColor White
 Write-Host "   3. Or search 'TERMINALIS-V.2' in Start Menu" -ForegroundColor White
 Write-Host ""
 Write-Host "📖 Documentation: https://github.com/Gokayofficialtrysolutions/TERMINALIS-V.2" -ForegroundColor Yellow
