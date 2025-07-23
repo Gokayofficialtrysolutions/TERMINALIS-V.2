@@ -1,0 +1,195 @@
+# TERMINALIS-V.2 Configuration File
+# ====================================
+
+system:
+  name: "TERMINALIS-V.2"
+  version: "2.0.0"
+  description: "Advanced Agentic AI Terminal System"
+  max_agents: 10
+  max_tools: 50
+  debug_mode: false
+  log_level: "INFO"
+
+# AI Model Configuration
+ai:
+  default_model: "bert-base-uncased"
+  max_tokens: 4096
+  temperature: 0.7
+  top_p: 0.9
+  max_length: 2048
+  
+  # Available models
+  models:
+    - name: "bert-base-uncased"
+      type: "transformer"
+      path: "models/bert"
+      description: "BERT base model for general NLP tasks"
+    
+    - name: "gpt2-medium"
+      type: "generative"
+      path: "models/gpt2"
+      description: "GPT-2 medium for text generation"
+
+# Agent Configuration
+agents:
+  default_type: "generic"
+  auto_activate: false
+  task_timeout: 300  # 5 minutes
+  
+  # Agent types and their capabilities
+  types:
+    generic:
+      capabilities: ["text_processing", "basic_reasoning"]
+      memory_limit: 1024
+    
+    analyst:
+      capabilities: ["data_analysis", "visualization", "reporting"]
+      memory_limit: 2048
+    
+    researcher:
+      capabilities: ["web_search", "document_analysis", "summarization"]
+      memory_limit: 4096
+    
+    coder:
+      capabilities: ["code_generation", "debugging", "testing"]
+      memory_limit: 2048
+
+# Tool Configuration
+tools:
+  auto_load: true
+  scan_directories: ["tools/", "scripts/"]
+  allowed_extensions: [".py", ".sh", ".bat", ".exe"]
+  
+  # Built-in tools
+  builtin:
+    - name: "file_manager"
+      enabled: true
+      description: "File system operations"
+    
+    - name: "web_scraper"
+      enabled: true
+      description: "Web content extraction"
+    
+    - name: "data_processor"
+      enabled: true
+      description: "Data manipulation and analysis"
+
+# Paths Configuration
+paths:
+  base: "."
+  models: "models"
+  agents: "agents"
+  tools: "tools"
+  data: "data"
+  logs: "logs"
+  scripts: "scripts"
+  temp: "temp"
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file_rotation: true
+  max_file_size: "10MB"
+  backup_count: 5
+  
+  # Log destinations
+  handlers:
+    - type: "file"
+      filename: "logs/terminalis.log"
+    - type: "console"
+      stream: "stdout"
+
+# Security Configuration
+security:
+  enable_authentication: false
+  api_key_required: false
+  allowed_hosts: ["localhost", "127.0.0.1"]
+  max_request_size: "100MB"
+  rate_limiting:
+    enabled: false
+    requests_per_minute: 60
+
+# Network Configuration
+network:
+  host: "localhost"
+  port: 8080
+  ssl_enabled: false
+  cors_enabled: true
+  timeout: 30
+
+# Database Configuration
+database:
+  type: "sqlite"
+  path: "data/terminalis.db"
+  auto_backup: true
+  backup_interval: 3600  # 1 hour
+
+# Performance Configuration
+performance:
+  max_concurrent_agents: 5
+  max_concurrent_tools: 10
+  memory_limit: "4GB"
+  cpu_cores: "auto"
+  
+  # Caching
+  cache:
+    enabled: true
+    max_size: "1GB"
+    ttl: 3600  # 1 hour
+
+# API Configuration
+api:
+  enabled: true
+  version: "v1"
+  documentation: true
+  
+  # Endpoints
+  endpoints:
+    agents: "/api/v1/agents"
+    tools: "/api/v1/tools"
+    models: "/api/v1/models"
+    status: "/api/v1/status"
+
+# UI Configuration
+ui:
+  theme: "dark"
+  language: "en"
+  auto_refresh: true
+  refresh_interval: 5  # seconds
+  
+  # Interface options
+  features:
+    real_time_logs: true
+    agent_monitoring: true
+    performance_metrics: true
+    file_browser: true
+
+# External Services
+external_services:
+  openai:
+    enabled: false
+    api_key: ""  # Set via environment variable OPENAI_API_KEY
+    model: "gpt-3.5-turbo"
+  
+  anthropic:
+    enabled: false
+    api_key: ""  # Set via environment variable ANTHROPIC_API_KEY
+    model: "claude-3-sonnet"
+  
+  huggingface:
+    enabled: true
+    cache_dir: "models/huggingface"
+    use_auth_token: false
+
+# Development Configuration
+development:
+  debug_mode: false
+  auto_reload: false
+  profiling: false
+  
+  # Testing
+  testing:
+    enabled: false
+    mock_external_services: true
+    test_data_path: "tests/data"
