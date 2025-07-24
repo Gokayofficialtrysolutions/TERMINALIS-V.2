@@ -1,0 +1,289 @@
+// Advanced Multi-Indicator Trading Strategy
+// © Gokaytrysolutions - PineScript XXXXLARGE Environment
+// Example of comprehensive trading strategy with risk management
+
+@version=5
+strategy("Advanced Multi-Indicator Strategy", 
+         shorttitle="AMIS", 
+         overlay=true, 
+         default_qty_type=strategy.percent_of_equity, 
+         default_qty_value=10,
+         commission_type=strategy.commission.percent,
+         commission_value=0.1)
+
+// =====================================================
+// INPUT PARAMETERS
+// =====================================================
+
+// Trend Following Indicators
+ma_fast_length = input.int(12, title="Fast MA Length", minval=1, maxval=100, group="Moving Averages")
+ma_slow_length = input.int(26, title="Slow MA Length", minval=1, maxval=200, group="Moving Averages")
+ma_type = input.string("EMA", title="MA Type", options=["SMA", "EMA", "WMA"], group="Moving Averages")
+
+// MACD Settings
+macd_fast = input.int(12, title="MACD Fast", minval=1, group="MACD")
+macd_slow = input.int(26, title="MACD Slow", minval=1, group="MACD")
+macd_signal = input.int(9, title="MACD Signal", minval=1, group="MACD")
+
+// RSI Settings
+rsi_length = input.int(14, title="RSI Length", minval=1, group="RSI")
+rsi_overbought = input.float(70, title="RSI Overbought", minval=50, maxval=100, group="RSI")
+rsi_oversold = input.float(30, title="RSI Oversold", minval=0, maxval=50, group="RSI")
+
+// Bollinger Bands
+bb_length = input.int(20, title="BB Length", minval=1, group="Bollinger Bands")
+bb_mult = input.float(2.0, title="BB Multiplier", minval=0.1, step=0.1, group="Bollinger Bands")
+
+// Risk Management
+risk_reward_ratio = input.float(2.0, title="Risk/Reward Ratio", minval=1.0, step=0.1, group="Risk Management")
+max_risk_percent = input.float(1.0, title="Max Risk %", minval=0.1, maxval=5.0, step=0.1, group="Risk Management")
+use_trailing_stop = input.bool(true, title="Use Trailing Stop", group="Risk Management")
+trailing_stop_mult = input.float(2.0, title="Trailing Stop ATR Multiplier", minval=1.0, step=0.1, group="Risk Management")
+
+// Time Filter
+use_time_filter = input.bool(false, title="Use Time Filter", group="Time Filter")
+start_hour = input.int(9, title="Start Hour", minval=0, maxval=23, group="Time Filter")
+end_hour = input.int(17, title="End Hour", minval=0, maxval=23, group="Time Filter")
+
+// =====================================================
+// HELPER FUNCTIONS
+// =====================================================
+
+// Calculate moving average based on type
+get_ma(source, length, ma_type_input) =>
+    switch ma_type_input
+        "SMA" => ta.sma(source, length)
+        "EMA" => ta.ema(source, length)  
+        "WMA" => ta.wma(source, length)
+        => ta.ema(source, length)
+
+// Check if current time is within trading hours
+in_time_window() =>
+    not use_time_filter or (hour >= start_hour and hour <= end_hour)
+
+// Calculate position size based on risk
+calculate_position_size(entry_price, stop_loss) =>
+    risk_amount = strategy.equity * (max_risk_percent / 100)
+    price_diff = math.abs(entry_price - stop_loss)
+    position_size = risk_amount / price_diff
+    math.min(position_size, strategy.equity * 0.95)
+
+// =====================================================
+// TECHNICAL INDICATORS
+// =====================================================
+
+// Moving Averages
+ma_fast = get_ma(close, ma_fast_length, ma_type)
+ma_slow = get_ma(close, ma_slow_length, ma_type)
+
+// MACD
+[macd_line, signal_line, histogram] = ta.macd(close, macd_fast, macd_slow, macd_signal)
+
+// RSI
+rsi = ta.rsi(close, rsi_length)
+
+// Bollinger Bands
+[bb_upper, bb_middle, bb_lower] = ta.bb(close, bb_length, bb_mult)
+
+// ATR for volatility
+atr = ta.atr(14)
+
+// Volume analysis
+volume_ma = ta.sma(volume, 20)
+volume_ratio = volume / volume_ma
+
+// Support and Resistance levels
+pivot_high = ta.pivothigh(high, 5, 5)
+pivot_low = ta.pivotlow(low, 5, 5)
+
+// =====================================================
+// SIGNAL GENERATION
+// =====================================================
+
+// Trend Signals
+trend_bullish = ma_fast > ma_slow
+trend_bearish = ma_fast < ma_slow
+
+// MACD Signals
+macd_bullish = ta.crossover(macd_line, signal_line) and histogram > 0
+macd_bearish = ta.crossunder(macd_line, signal_line) and histogram < 0
+
+// RSI Signals  
+rsi_bullish = rsi < rsi_oversold and ta.crossover(rsi, rsi_oversold)
+rsi_bearish = rsi > rsi_overbought and ta.crossunder(rsi, rsi_overbought)
+
+// Bollinger Bands Signals
+bb_bullish = close < bb_lower and close > close[1]
+bb_bearish = close > bb_upper and close < close[1]
+
+// Volume Confirmation
+volume_confirmed = volume_ratio > 1.2
+
+// Combine all signals
+long_signal = trend_bullish and (macd_bullish or rsi_bullish or bb_bullish) and volume_confirmed and in_time_window()
+short_signal = trend_bearish and (macd_bearish or rsi_bearish or bb_bearish) and volume_confirmed and in_time_window()
+
+// =====================================================
+// RISK MANAGEMENT
+// =====================================================
+
+// Calculate stop loss and take profit levels
+var float long_stop_loss = na
+var float long_take_profit = na
+var float short_stop_loss = na
+var float short_take_profit = na
+
+if long_signal and strategy.position_size == 0
+    long_stop_loss := close - (atr * 2)
+    long_take_profit := close + (atr * 2 * risk_reward_ratio)
+
+if short_signal and strategy.position_size == 0
+    short_stop_loss := close + (atr * 2)
+    short_take_profit := close - (atr * 2 * risk_reward_ratio)
+
+// Trailing stop logic
+if use_trailing_stop and strategy.position_size > 0
+    trail_stop = close - (atr * trailing_stop_mult)
+    if trail_stop > long_stop_loss
+        long_stop_loss := trail_stop
+
+if use_trailing_stop and strategy.position_size < 0
+    trail_stop = close + (atr * trailing_stop_mult)
+    if trail_stop < short_stop_loss
+        short_stop_loss := trail_stop
+
+// =====================================================
+// STRATEGY EXECUTION
+// =====================================================
+
+// Long Entry
+if long_signal and strategy.position_size == 0
+    qty = calculate_position_size(close, long_stop_loss)
+    strategy.entry("Long", strategy.long, qty=qty)
+    
+// Short Entry  
+if short_signal and strategy.position_size == 0
+    qty = calculate_position_size(close, short_stop_loss)
+    strategy.entry("Short", strategy.short, qty=qty)
+
+// Long Exit
+if strategy.position_size > 0
+    strategy.exit("Long Exit", from_entry="Long", 
+                  stop=long_stop_loss, 
+                  limit=long_take_profit,
+                  comment="Long Exit")
+
+// Short Exit
+if strategy.position_size < 0
+    strategy.exit("Short Exit", from_entry="Short", 
+                  stop=short_stop_loss, 
+                  limit=short_take_profit,
+                  comment="Short Exit")
+
+// Emergency exit conditions
+emergency_exit_long = ta.crossunder(close, ma_slow) and strategy.position_size > 0
+emergency_exit_short = ta.crossover(close, ma_slow) and strategy.position_size < 0
+
+if emergency_exit_long
+    strategy.close("Long", comment="Emergency Exit Long")
+    
+if emergency_exit_short
+    strategy.close("Short", comment="Emergency Exit Short")
+
+// =====================================================
+// PLOTTING
+// =====================================================
+
+// Plot moving averages
+plot(ma_fast, title="Fast MA", color=color.blue, linewidth=1)
+plot(ma_slow, title="Slow MA", color=color.red, linewidth=1)
+
+// Plot Bollinger Bands
+bb_upper_plot = plot(bb_upper, title="BB Upper", color=color.gray, linewidth=1)
+bb_lower_plot = plot(bb_lower, title="BB Lower", color=color.gray, linewidth=1)
+plot(bb_middle, title="BB Middle", color=color.orange, linewidth=1)
+fill(bb_upper_plot, bb_lower_plot, color=color.new(color.gray, 95), title="BB Fill")
+
+// Plot entry signals
+plotshape(long_signal, title="Long Signal", style=shape.triangleup, 
+          location=location.belowbar, color=color.green, size=size.small)
+plotshape(short_signal, title="Short Signal", style=shape.triangledown, 
+          location=location.abovebar, color=color.red, size=size.small)
+
+// Plot stop loss and take profit levels
+plot(strategy.position_size > 0 ? long_stop_loss : na, title="Long Stop Loss", 
+     color=color.red, style=plot.style_linebr, linewidth=1)
+plot(strategy.position_size > 0 ? long_take_profit : na, title="Long Take Profit", 
+     color=color.green, style=plot.style_linebr, linewidth=1)
+plot(strategy.position_size < 0 ? short_stop_loss : na, title="Short Stop Loss", 
+     color=color.red, style=plot.style_linebr, linewidth=1)
+plot(strategy.position_size < 0 ? short_take_profit : na, title="Short Take Profit", 
+     color=color.green, style=plot.style_linebr, linewidth=1)
+
+// Background color for trend
+bgcolor(trend_bullish ? color.new(color.green, 98) : trend_bearish ? color.new(color.red, 98) : na, 
+        title="Trend Background")
+
+// =====================================================
+// PERFORMANCE METRICS TABLE
+// =====================================================
+
+if barstate.islast
+    var table performance_table = table.new(position.top_right, 2, 8, bgcolor=color.white, border_width=1)
+    
+    table.cell(performance_table, 0, 0, "Metric", text_color=color.black, bgcolor=color.gray)
+    table.cell(performance_table, 1, 0, "Value", text_color=color.black, bgcolor=color.gray)
+    
+    table.cell(performance_table, 0, 1, "Net Profit", text_color=color.black)
+    table.cell(performance_table, 1, 1, str.tostring(strategy.netprofit, "#.##"), text_color=color.black)
+    
+    table.cell(performance_table, 0, 2, "Win Rate", text_color=color.black)
+    win_rate = strategy.wintrades > 0 ? (strategy.wintrades / (strategy.wintrades + strategy.losstrades)) * 100 : 0
+    table.cell(performance_table, 1, 2, str.tostring(win_rate, "#.##") + "%", text_color=color.black)
+    
+    table.cell(performance_table, 0, 3, "Total Trades", text_color=color.black)
+    table.cell(performance_table, 1, 3, str.tostring(strategy.closedtrades), text_color=color.black)
+    
+    table.cell(performance_table, 0, 4, "Profit Factor", text_color=color.black)
+    profit_factor = strategy.grossloss != 0 ? strategy.grossprofit / math.abs(strategy.grossloss) : 0
+    table.cell(performance_table, 1, 4, str.tostring(profit_factor, "#.##"), text_color=color.black)
+    
+    table.cell(performance_table, 0, 5, "Max Drawdown", text_color=color.black)
+    table.cell(performance_table, 1, 5, str.tostring(strategy.max_drawdown, "#.##"), text_color=color.black)
+    
+    table.cell(performance_table, 0, 6, "Avg Trade", text_color=color.black)
+    avg_trade = strategy.closedtrades > 0 ? strategy.netprofit / strategy.closedtrades : 0
+    table.cell(performance_table, 1, 6, str.tostring(avg_trade, "#.##"), text_color=color.black)
+    
+    table.cell(performance_table, 0, 7, "Current Position", text_color=color.black)
+    pos_text = strategy.position_size > 0 ? "Long" : strategy.position_size < 0 ? "Short" : "Flat"
+    table.cell(performance_table, 1, 7, pos_text, text_color=color.black)
+
+// =====================================================
+// ALERTS
+// =====================================================
+
+// Set up alerts for entries and exits
+alertcondition(long_signal, title="Long Entry Alert", 
+               message="AMIS: Long entry signal triggered at {{close}}")
+alertcondition(short_signal, title="Short Entry Alert", 
+               message="AMIS: Short entry signal triggered at {{close}}")
+alertcondition(emergency_exit_long, title="Long Emergency Exit Alert", 
+               message="AMIS: Emergency exit long position at {{close}}")
+alertcondition(emergency_exit_short, title="Short Emergency Exit Alert", 
+               message="AMIS: Emergency exit short position at {{close}}")
+
+// =====================================================
+// COMMENTS AND DEBUGGING
+// =====================================================
+
+// Add comments for debugging (can be removed in production)
+// if barstate.islast
+//     log.info("Strategy Performance Summary:")
+//     log.info("Net Profit: " + str.tostring(strategy.netprofit))
+//     log.info("Total Trades: " + str.tostring(strategy.closedtrades))
+//     log.info("Win Rate: " + str.tostring(win_rate) + "%")
+
+// =====================================================
+// END OF STRATEGY
+// =====================================================
