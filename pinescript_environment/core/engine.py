@@ -23,6 +23,7 @@ class PineScriptVersion(Enum):
     V3 = "v3"
     V4 = "v4"
     V5 = "v5"
+    V6 = "v6"  # Latest version with enhanced features
 
 class ScriptType(Enum):
     """PineScript script type enumeration"""
@@ -65,26 +66,49 @@ class PineScriptEngine:
         self.config = config
         self.logger = logging.getLogger(__name__)
         
-        # PineScript v5 Keywords and Functions
+        # PineScript v6 Keywords and Functions (includes all previous versions)
         self.keywords = {
-            'version_declaration': ['@version=5'],
+            'version_declaration': ['@version=6', '@version=5'],
             'script_declaration': ['indicator', 'strategy', 'library'],
             'variable_declaration': ['var', 'varip'],
             'control_flow': ['if', 'else', 'for', 'while', 'switch'],
             'data_types': ['int', 'float', 'bool', 'string', 'color', 'line', 'label', 'table', 'box'],
             'builtin_variables': ['open', 'high', 'low', 'close', 'volume', 'time', 'bar_index'],
             'builtin_functions': [
+                # Technical Analysis (v6 enhanced)
                 'ta.sma', 'ta.ema', 'ta.rsi', 'ta.macd', 'ta.stoch', 'ta.bb',
-                'request.security', 'str.tostring', 'array.new', 'map.new',
+                'ta.supertrend', 'ta.pivothigh', 'ta.pivotlow', 'ta.correlation',
+                'ta.linreg', 'ta.percentrank', 'ta.mom', 'ta.roc', 'ta.tsi',
+                # Request functions (v6 enhanced)
+                'request.security', 'request.security_lower_tf', 'request.currency_rate',
+                'request.dividends', 'request.splits', 'request.earnings',
+                # String functions
+                'str.tostring', 'str.tonumber', 'str.length', 'str.substring',
+                'str.contains', 'str.startswith', 'str.endswith', 'str.replace',
+                # Data structures (v6 enhanced)
+                'array.new', 'array.from', 'array.copy', 'array.concat',
+                'matrix.new', 'matrix.copy', 'matrix.submatrix',
+                'map.new', 'map.copy', 'map.from_str',
+                # Math functions (v6 enhanced)
                 'math.abs', 'math.max', 'math.min', 'math.round', 'math.floor',
-                'plot', 'plotshape', 'plotchar', 'bgcolor', 'fill',
-                'strategy.entry', 'strategy.exit', 'strategy.close'
+                'math.ceil', 'math.pow', 'math.sqrt', 'math.exp', 'math.log',
+                'math.sin', 'math.cos', 'math.tan', 'math.random',
+                # Plotting (v6 enhanced)
+                'plot', 'plotshape', 'plotchar', 'plotcandle', 'plotbar',
+                'bgcolor', 'fill', 'hline', 'vline',
+                # Strategy functions (v6 enhanced)
+                'strategy.entry', 'strategy.exit', 'strategy.close',
+                'strategy.cancel', 'strategy.cancel_all', 'strategy.opentrades',
+                # Input functions (v6 enhanced)
+                'input', 'input.int', 'input.float', 'input.bool', 'input.string',
+                'input.symbol', 'input.timeframe', 'input.source', 'input.color',
+                'input.text_area', 'input.table_cell'
             ]
         }
         
-        # PineScript v5 Syntax Patterns
+        # PineScript v6 Syntax Patterns (includes all previous versions)
         self.syntax_patterns = {
-            'version': r'@version\s*=\s*[1-5]',
+            'version': r'@version\s*=\s*[1-6]',
             'declaration': r'(indicator|strategy|library)\s*\(',
             'variable': r'(var|varip)?\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=',
             'function_def': r'([a-zA-Z_][a-zA-Z0-9_]*\s*\([^)]*\)\s*=>)',
@@ -96,23 +120,132 @@ class PineScriptEngine:
             'request': r'request\.(security|dividends|splits|earnings)',
             'ta_functions': r'ta\.[a-zA-Z_][a-zA-Z0-9_]*\s*\(',
             'math_functions': r'math\.[a-zA-Z_][a-zA-Z0-9_]*\s*\(',
-            'strategy_functions': r'strategy\.[a-zA-Z_][a-zA-Z0-9_]*\s*\('
+            'strategy_functions': r'strategy\.[a-zA-Z_][a-zA-Z0-9_]*\s*\(',
+            'matrix_functions': r'matrix\.[a-zA-Z_][a-zA-Z0-9_]*\s*\(',
+            'input_functions': r'input\.[a-zA-Z_][a-zA-Z0-9_]*\s*\(',
+            'str_functions': r'str\.[a-zA-Z_][a-zA-Z0-9_]*\s*\(',
+            'method_calls': r'\.[a-zA-Z_][a-zA-Z0-9_]*\s*\(',
+            'type_declarations': r'<[a-zA-Z_][a-zA-Z0-9_,\s]*>',
+            'export_functions': r'export\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(',
+            'import_statements': r'import\s+[a-zA-Z_][a-zA-Z0-9_./]*'
         }
         
-        # Built-in functions with signatures
+        # Built-in functions with signatures (v6 enhanced)
         self.function_signatures = {
+            # Technical Analysis Functions
             'ta.sma': 'ta.sma(source, length)',
             'ta.ema': 'ta.ema(source, length)',
             'ta.rsi': 'ta.rsi(source, length)',
             'ta.macd': 'ta.macd(source, fast, slow, signal)',
             'ta.stoch': 'ta.stoch(source, high, low, length)',
             'ta.bb': 'ta.bb(source, length, mult)',
-            'request.security': 'request.security(symbol, timeframe, expression)',
-            'plot': 'plot(series, title, color, linewidth, style)',
-            'strategy.entry': 'strategy.entry(id, direction, qty, limit, stop)',
-            'strategy.exit': 'strategy.exit(id, from_entry, loss, profit, trail_price)',
+            'ta.supertrend': 'ta.supertrend(factor, atrPeriod)',
+            'ta.pivothigh': 'ta.pivothigh(source, leftbars, rightbars)',
+            'ta.pivotlow': 'ta.pivotlow(source, leftbars, rightbars)',
+            'ta.correlation': 'ta.correlation(source1, source2, length)',
+            'ta.linreg': 'ta.linreg(source, length, offset)',
+            'ta.percentrank': 'ta.percentrank(source, length)',
+            'ta.mom': 'ta.mom(source, length)',
+            'ta.roc': 'ta.roc(source, length)',
+            'ta.tsi': 'ta.tsi(source, short_length, long_length)',
+            
+            # Request Functions
+            'request.security': 'request.security(symbol, timeframe, expression, gaps, lookahead, ignore_invalid_symbol, currency)',
+            'request.security_lower_tf': 'request.security_lower_tf(symbol, timeframe, expression, ignore_invalid_symbol, currency, calc_bars_count)',
+            'request.currency_rate': 'request.currency_rate(from, to)',
+            'request.dividends': 'request.dividends(ticker, field, gaps, lookahead, ignore_invalid_symbol, currency)',
+            'request.splits': 'request.splits(ticker, field, gaps, lookahead, ignore_invalid_symbol)',
+            'request.earnings': 'request.earnings(ticker, field, gaps, lookahead, ignore_invalid_symbol, currency)',
+            
+            # String Functions
+            'str.tostring': 'str.tostring(value, format)',
+            'str.tonumber': 'str.tonumber(string)',
+            'str.length': 'str.length(string)',
+            'str.substring': 'str.substring(string, begin_pos, end_pos)',
+            'str.contains': 'str.contains(source, str)',
+            'str.startswith': 'str.startswith(source, str)',
+            'str.endswith': 'str.endswith(source, str)',
+            'str.replace': 'str.replace(source, target, replacement, occurrence)',
+            
+            # Array Functions
             'array.new<type>': 'array.new<type>(size, initial_value)',
-            'map.new<key_type, value_type>': 'map.new<key_type, value_type>()',
+            'array.from': 'array.from(arg0, arg1, ...)',
+            'array.copy': 'array.copy(id)',
+            'array.concat': 'array.concat(id1, id2)',
+            'array.push': 'array.push(id, value)',
+            'array.pop': 'array.pop(id)',
+            'array.get': 'array.get(id, index)',
+            'array.set': 'array.set(id, index, value)',
+            'array.size': 'array.size(id)',
+            'array.slice': 'array.slice(id, index_from, index_to)',
+            'array.sort': 'array.sort(id, order)',
+            'array.reverse': 'array.reverse(id)',
+            
+            # Matrix Functions (v6 new)
+            'matrix.new<type>': 'matrix.new<type>(rows, columns, initial_value)',
+            'matrix.copy': 'matrix.copy(id)',
+            'matrix.submatrix': 'matrix.submatrix(id, from_row, to_row, from_column, to_column)',
+            'matrix.get': 'matrix.get(id, row, column)',
+            'matrix.set': 'matrix.set(id, row, column, value)',
+            'matrix.rows': 'matrix.rows(id)',
+            'matrix.columns': 'matrix.columns(id)',
+            
+            # Map Functions
+            'map.new<K,V>': 'map.new<K,V>()',
+            'map.copy': 'map.copy(id)',
+            'map.from_str': 'map.from_str<K,V>(str)',
+            'map.put': 'map.put(id, key, value)',
+            'map.get': 'map.get(id, key)',
+            'map.remove': 'map.remove(id, key)',
+            'map.size': 'map.size(id)',
+            'map.keys': 'map.keys(id)',
+            'map.values': 'map.values(id)',
+            
+            # Math Functions
+            'math.abs': 'math.abs(number)',
+            'math.max': 'math.max(number1, number2)',
+            'math.min': 'math.min(number1, number2)',
+            'math.round': 'math.round(number, precision)',
+            'math.floor': 'math.floor(number)',
+            'math.ceil': 'math.ceil(number)',
+            'math.pow': 'math.pow(base, exponent)',
+            'math.sqrt': 'math.sqrt(number)',
+            'math.exp': 'math.exp(number)',
+            'math.log': 'math.log(number)',
+            'math.sin': 'math.sin(angle)',
+            'math.cos': 'math.cos(angle)',
+            'math.tan': 'math.tan(angle)',
+            'math.random': 'math.random(min, max, seed)',
+            
+            # Plotting Functions
+            'plot': 'plot(series, title, color, linewidth, style, trackprice, histbase, offset, join, editable, show_last, display)',
+            'plotshape': 'plotshape(series, title, style, location, color, offset, text, textcolor, editable, size, show_last, display)',
+            'plotchar': 'plotchar(series, title, char, location, color, offset, text, textcolor, editable, size, show_last, display)',
+            'plotcandle': 'plotcandle(open, high, low, close, title, color, wickcolor, editable, show_last, bordercolor, display)',
+            'plotbar': 'plotbar(open, high, low, close, title, color, editable, show_last, display)',
+            'bgcolor': 'bgcolor(color, offset, editable, show_last, title, display)',
+            'fill': 'fill(plot1, plot2, color, title, editable, show_last, fillgaps, display)',
+            'hline': 'hline(price, title, color, linestyle, linewidth, editable, display)',
+            'vline': 'vline(time, color, linestyle, linewidth, text, textcolor, editable, display)',
+            
+            # Strategy Functions
+            'strategy.entry': 'strategy.entry(id, direction, qty, limit, stop, oca_name, oca_type, comment, when, alert_message)',
+            'strategy.exit': 'strategy.exit(id, from_entry, qty, qty_percent, profit, limit, loss, stop, trail_price, trail_points, trail_offset, oca_name, comment, when, alert_message)',
+            'strategy.close': 'strategy.close(id, when, qty, qty_percent, comment, alert_message, immediately)',
+            'strategy.cancel': 'strategy.cancel(id, when)',
+            'strategy.cancel_all': 'strategy.cancel_all(when)',
+            
+            # Input Functions (v6 enhanced)
+            'input.int': 'input.int(defval, title, minval, maxval, step, options, tooltip, inline, group, confirm)',
+            'input.float': 'input.float(defval, title, minval, maxval, step, options, tooltip, inline, group, confirm)',
+            'input.bool': 'input.bool(defval, title, tooltip, inline, group, confirm)',
+            'input.string': 'input.string(defval, title, options, tooltip, inline, group, confirm)',
+            'input.symbol': 'input.symbol(defval, title, tooltip, inline, group, confirm)',
+            'input.timeframe': 'input.timeframe(defval, title, options, tooltip, inline, group, confirm)',
+            'input.source': 'input.source(defval, title, tooltip, inline, group, confirm)',
+            'input.color': 'input.color(defval, title, tooltip, inline, group, confirm)',
+            'input.text_area': 'input.text_area(defval, title, tooltip, confirm)',
+            'input.table_cell': 'input.table_cell(defval, title, options, tooltip, inline, group, confirm)'
         }
         
         # Error patterns and fixes
@@ -189,8 +322,8 @@ class PineScriptEngine:
                 version_str = version_match.group(0).split('=')[1].strip()
                 version = PineScriptVersion(f"v{version_str}")
             else:
-                version = PineScriptVersion.V5  # Default to v5
-                warnings.append("No version specified, defaulting to v5")
+                version = PineScriptVersion.V6  # Default to v6 (latest)
+                warnings.append("No version specified, defaulting to v6")
             
             # Detect script type
             script_type_match = re.search(self.syntax_patterns['declaration'], code)
@@ -229,7 +362,7 @@ class PineScriptEngine:
                 warnings=[],
                 ast=None,
                 metadata={},
-                version=PineScriptVersion.V5,
+                version=PineScriptVersion.V6,
                 script_type=ScriptType.INDICATOR
             )
     

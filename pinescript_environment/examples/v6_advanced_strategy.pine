@@ -1,0 +1,435 @@
+// PineScript v6 Advanced Trading Strategy with New Features
+// © Gokaytrysolutions - PineScript XXXXLARGE Environment
+// Demonstrates PineScript v6 enhanced capabilities
+
+@version=6
+strategy("PineScript v6 Advanced Strategy", 
+         shorttitle="PSv6", 
+         overlay=true, 
+         default_qty_type=strategy.percent_of_equity, 
+         default_qty_value=15,
+         commission_type=strategy.commission.percent,
+         commission_value=0.1,
+         slippage=2)
+
+import TradingView/ta/7 as tvta
+
+// =====================================================
+// INPUT PARAMETERS (v6 Enhanced)
+// =====================================================
+
+// Strategy Configuration
+strategy_group = "Strategy Settings"
+enable_long = input.bool(true, title="Enable Long Trades", group=strategy_group)
+enable_short = input.bool(true, title="Enable Short Trades", group=strategy_group)
+max_position_size = input.float(20.0, title="Max Position Size %", minval=1.0, maxval=50.0, group=strategy_group)
+
+// Technical Indicators
+indicators_group = "Technical Indicators"
+ma_length_fast = input.int(12, title="Fast MA Length", minval=1, maxval=100, group=indicators_group)
+ma_length_slow = input.int(26, title="Slow MA Length", minval=1, maxval=200, group=indicators_group)
+rsi_length = input.int(14, title="RSI Length", minval=2, maxval=50, group=indicators_group)
+rsi_overbought = input.float(70, title="RSI Overbought", minval=50, maxval=100, group=indicators_group)
+rsi_oversold = input.float(30, title="RSI Oversold", minval=0, maxval=50, group=indicators_group)
+
+// Matrix-based calculations (v6 new feature)
+matrix_group = "Matrix Analysis"
+use_matrix_analysis = input.bool(true, title="Enable Matrix Analysis", group=matrix_group)
+matrix_lookback = input.int(20, title="Matrix Lookback Period", minval=10, maxval=50, group=matrix_group)
+
+// Advanced Risk Management
+risk_group = "Risk Management"
+risk_per_trade = input.float(1.5, title="Risk Per Trade %", minval=0.5, maxval=5.0, step=0.1, group=risk_group)
+risk_reward_ratio = input.float(2.5, title="Risk/Reward Ratio", minval=1.0, maxval=5.0, step=0.1, group=risk_group)
+max_consecutive_losses = input.int(3, title="Max Consecutive Losses", minval=1, maxval=10, group=risk_group)
+
+// Time and Session Filters
+time_group = "Time & Session Filters"
+use_session_filter = input.bool(true, title="Use Session Filter", group=time_group)
+session_start = input.string("0900-1600", title="Trading Session", group=time_group)
+use_day_filter = input.bool(false, title="Exclude Weekends", group=time_group)
+
+// Alert Settings
+alert_group = "Alert Configuration"
+send_entry_alerts = input.bool(true, title="Send Entry Alerts", group=alert_group)
+send_exit_alerts = input.bool(true, title="Send Exit Alerts", group=alert_group)
+alert_message_prefix = input.string("PSv6", title="Alert Message Prefix", group=alert_group)
+
+// =====================================================
+// ENHANCED FUNCTIONS (v6 Features)
+// =====================================================
+
+// Matrix-based price analysis
+calculate_price_matrix(src, length) =>
+    var matrix<float> price_matrix = matrix.new<float>(length, 4, na)
+    
+    if bar_index >= length
+        // Shift matrix rows up
+        for i = 0 to length - 2
+            for j = 0 to 3
+                matrix.set(price_matrix, i, j, matrix.get(price_matrix, i + 1, j))
+        
+        // Add new row with OHLC data
+        matrix.set(price_matrix, length - 1, 0, open)
+        matrix.set(price_matrix, length - 1, 1, high)
+        matrix.set(price_matrix, length - 1, 2, low)
+        matrix.set(price_matrix, length - 1, 3, close)
+    
+    price_matrix
+
+// Enhanced correlation analysis
+calculate_multi_correlation(src1, src2, src3, length) =>
+    corr_12 = ta.correlation(src1, src2, length)
+    corr_13 = ta.correlation(src1, src3, length)
+    corr_23 = ta.correlation(src2, src3, length)
+    
+    avg_correlation = (math.abs(corr_12) + math.abs(corr_13) + math.abs(corr_23)) / 3
+    [corr_12, corr_13, corr_23, avg_correlation]
+
+// Advanced volatility calculation
+calculate_advanced_volatility() =>
+    atr_short = ta.atr(5)
+    atr_medium = ta.atr(14)
+    atr_long = ta.atr(28)
+    
+    volatility_ratio = atr_short / atr_medium
+    volatility_trend = atr_medium > atr_long ? 1 : atr_medium < atr_long ? -1 : 0
+    
+    [atr_short, atr_medium, atr_long, volatility_ratio, volatility_trend]
+
+// Dynamic position sizing based on market conditions
+calculate_dynamic_position_size(base_risk_percent, volatility_factor, correlation_factor) =>
+    // Adjust position size based on volatility
+    volatility_adjustment = volatility_factor > 1.5 ? 0.7 : volatility_factor < 0.5 ? 1.3 : 1.0
+    
+    // Adjust position size based on correlation
+    correlation_adjustment = correlation_factor > 0.7 ? 0.8 : correlation_factor < 0.3 ? 1.2 : 1.0
+    
+    adjusted_risk = base_risk_percent * volatility_adjustment * correlation_adjustment
+    math.min(adjusted_risk, max_position_size)
+
+// =====================================================
+// TECHNICAL ANALYSIS (v6 Enhanced)
+// =====================================================
+
+// Moving averages
+ma_fast = ta.ema(close, ma_length_fast)
+ma_slow = ta.ema(close, ma_length_slow)
+
+// RSI with enhanced features
+rsi = ta.rsi(close, rsi_length)
+rsi_ma = ta.sma(rsi, 5)
+
+// SuperTrend indicator (v6 feature)
+[supertrend, trend_direction] = ta.supertrend(3.0, 10)
+
+// Advanced MACD with histogram analysis
+[macd_line, signal_line, histogram] = ta.macd(close, 12, 26, 9)
+histogram_momentum = histogram - histogram[1]
+
+// Bollinger Bands with enhanced analysis
+[bb_upper, bb_middle, bb_lower] = ta.bb(close, 20, 2.0)
+bb_width = (bb_upper - bb_lower) / bb_middle
+bb_position = (close - bb_lower) / (bb_upper - bb_lower)
+
+// Volume analysis
+volume_ma = ta.sma(volume, 20)
+volume_ratio = volume / volume_ma
+volume_trend = ta.sma(volume_ratio, 5)
+
+// Matrix analysis (if enabled)
+price_matrix = use_matrix_analysis ? calculate_price_matrix(close, matrix_lookback) : na
+
+// Multi-timeframe analysis
+htf_trend = request.security(syminfo.tickerid, "1D", ta.ema(close, 50) > ta.ema(close, 200) ? 1 : -1)
+mtf_momentum = request.security(syminfo.tickerid, "4H", ta.mom(close, 14))
+
+// Correlation analysis
+[corr_price_volume, corr_price_rsi, corr_volume_rsi, avg_corr] = calculate_multi_correlation(close, volume, rsi, 14)
+
+// Advanced volatility
+[atr_short, atr_medium, atr_long, vol_ratio, vol_trend] = calculate_advanced_volatility()
+
+// =====================================================
+// SIGNAL GENERATION (v6 Enhanced)
+// =====================================================
+
+// Trend signals
+trend_bullish = ma_fast > ma_slow and trend_direction == 1
+trend_bearish = ma_fast < ma_slow and trend_direction == -1
+
+// Momentum signals
+momentum_bullish = rsi < rsi_oversold and ta.crossover(rsi, rsi_ma) and histogram_momentum > 0
+momentum_bearish = rsi > rsi_overbought and ta.crossunder(rsi, rsi_ma) and histogram_momentum < 0
+
+// Mean reversion signals
+mean_reversion_bullish = close < bb_lower and bb_position < 0.1 and volume_ratio > 1.2
+mean_reversion_bearish = close > bb_upper and bb_position > 0.9 and volume_ratio > 1.2
+
+// Volatility breakout signals
+volatility_breakout_long = vol_ratio > 1.3 and close > high[1] and volume_ratio > 1.5
+volatility_breakout_short = vol_ratio > 1.3 and close < low[1] and volume_ratio > 1.5
+
+// Multi-timeframe confirmation
+mtf_bullish = htf_trend == 1 and mtf_momentum > 0
+mtf_bearish = htf_trend == -1 and mtf_momentum < 0
+
+// Session filter
+in_session = not use_session_filter or time(timeframe.period, session_start)
+day_filter_ok = not use_day_filter or (dayofweek != dayofweek.saturday and dayofweek != dayofweek.sunday)
+
+// Combined signals
+long_signal = enable_long and trend_bullish and (momentum_bullish or mean_reversion_bullish or volatility_breakout_long) and mtf_bullish and in_session and day_filter_ok
+short_signal = enable_short and trend_bearish and (momentum_bearish or mean_reversion_bearish or volatility_breakout_short) and mtf_bearish and in_session and day_filter_ok
+
+// =====================================================
+// RISK MANAGEMENT (v6 Enhanced)
+// =====================================================
+
+// Track consecutive losses
+var int consecutive_losses = 0
+var int consecutive_wins = 0
+
+// Update consecutive loss/win counter
+if strategy.closedtrades > strategy.closedtrades[1]
+    if strategy.losstrades > strategy.losstrades[1]
+        consecutive_losses += 1
+        consecutive_wins := 0
+    else if strategy.wintrades > strategy.wintrades[1]
+        consecutive_wins += 1
+        consecutive_losses := 0
+
+// Risk management conditions
+max_losses_reached = consecutive_losses >= max_consecutive_losses
+risk_management_ok = not max_losses_reached
+
+// Dynamic position sizing
+dynamic_position_size = calculate_dynamic_position_size(risk_per_trade, vol_ratio, avg_corr)
+
+// Calculate stop loss and take profit levels
+var float long_entry_price = na
+var float short_entry_price = na
+var float long_stop_loss = na
+var float short_stop_loss = na
+var float long_take_profit = na
+var float short_take_profit = na
+
+if long_signal and strategy.position_size == 0 and risk_management_ok
+    long_entry_price := close
+    long_stop_loss := close - (atr_medium * 2)
+    long_take_profit := close + (atr_medium * 2 * risk_reward_ratio)
+
+if short_signal and strategy.position_size == 0 and risk_management_ok
+    short_entry_price := close
+    short_stop_loss := close + (atr_medium * 2)
+    short_take_profit := close - (atr_medium * 2 * risk_reward_ratio)
+
+// =====================================================
+// STRATEGY EXECUTION (v6 Enhanced)
+// =====================================================
+
+// Entry orders
+if long_signal and strategy.position_size == 0 and risk_management_ok
+    qty = (strategy.equity * (dynamic_position_size / 100)) / close
+    strategy.entry("Long", strategy.long, 
+                   qty=qty, 
+                   comment="Long Entry",
+                   alert_message=send_entry_alerts ? alert_message_prefix + ": Long Entry at " + str.tostring(close) : na)
+
+if short_signal and strategy.position_size == 0 and risk_management_ok
+    qty = (strategy.equity * (dynamic_position_size / 100)) / close
+    strategy.entry("Short", strategy.short, 
+                   qty=qty, 
+                   comment="Short Entry",
+                   alert_message=send_entry_alerts ? alert_message_prefix + ": Short Entry at " + str.tostring(close) : na)
+
+// Exit orders
+if strategy.position_size > 0
+    strategy.exit("Long Exit", from_entry="Long", 
+                  stop=long_stop_loss, 
+                  limit=long_take_profit,
+                  comment="Long Exit",
+                  alert_message=send_exit_alerts ? alert_message_prefix + ": Long Exit" : na)
+
+if strategy.position_size < 0
+    strategy.exit("Short Exit", from_entry="Short", 
+                  stop=short_stop_loss, 
+                  limit=short_take_profit,
+                  comment="Short Exit",
+                  alert_message=send_exit_alerts ? alert_message_prefix + ": Short Exit" : na)
+
+// Emergency exits
+emergency_long_exit = strategy.position_size > 0 and ta.crossunder(close, ma_slow) and vol_ratio > 2.0
+emergency_short_exit = strategy.position_size < 0 and ta.crossover(close, ma_slow) and vol_ratio > 2.0
+
+if emergency_long_exit
+    strategy.close("Long", comment="Emergency Long Exit", immediately=true)
+
+if emergency_short_exit
+    strategy.close("Short", comment="Emergency Short Exit", immediately=true)
+
+// =====================================================
+// ENHANCED PLOTTING (v6 Features)
+// =====================================================
+
+// Plot moving averages with dynamic colors
+ma_fast_color = ma_fast > ma_fast[1] ? color.lime : color.red
+ma_slow_color = ma_slow > ma_slow[1] ? color.blue : color.orange
+
+plot(ma_fast, title="Fast MA", color=ma_fast_color, linewidth=2)
+plot(ma_slow, title="Slow MA", color=ma_slow_color, linewidth=2)
+
+// Plot SuperTrend
+plot(supertrend, title="SuperTrend", color=trend_direction == 1 ? color.green : color.red, linewidth=2)
+
+// Plot Bollinger Bands
+bb_upper_plot = plot(bb_upper, title="BB Upper", color=color.gray, linewidth=1)
+bb_lower_plot = plot(bb_lower, title="BB Lower", color=color.gray, linewidth=1)
+fill(bb_upper_plot, bb_lower_plot, color=color.new(color.blue, 95), 
+     title="BB Fill", fillgaps=true)
+
+// Plot entry signals with enhanced markers
+plotshape(long_signal, title="Long Signal", style=shape.triangleup, 
+          location=location.belowbar, color=color.lime, size=size.normal,
+          text="L", textcolor=color.white)
+plotshape(short_signal, title="Short Signal", style=shape.triangledown, 
+          location=location.abovebar, color=color.red, size=size.normal,
+          text="S", textcolor=color.white)
+
+// Plot stop loss and take profit levels
+plot(strategy.position_size > 0 ? long_stop_loss : na, title="Long SL", 
+     color=color.red, style=plot.style_linebr, linewidth=2)
+plot(strategy.position_size > 0 ? long_take_profit : na, title="Long TP", 
+     color=color.green, style=plot.style_linebr, linewidth=2)
+plot(strategy.position_size < 0 ? short_stop_loss : na, title="Short SL", 
+     color=color.red, style=plot.style_linebr, linewidth=2)
+plot(strategy.position_size < 0 ? short_take_profit : na, title="Short TP", 
+     color=color.green, style=plot.style_linebr, linewidth=2)
+
+// Background color for market conditions
+bgcolor(max_losses_reached ? color.new(color.red, 90) : na, title="Max Losses Reached")
+bgcolor(vol_ratio > 2.0 ? color.new(color.yellow, 95) : na, title="High Volatility")
+
+// =====================================================
+// ADVANCED PERFORMANCE TABLE (v6 Enhanced)
+// =====================================================
+
+if barstate.islast
+    var table performance_table = table.new(position.top_right, 3, 12, 
+                                           bgcolor=color.white, 
+                                           border_width=1,
+                                           border_color=color.gray)
+    
+    // Headers
+    table.cell(performance_table, 0, 0, "Metric", text_color=color.black, bgcolor=color.gray, text_size=size.small)
+    table.cell(performance_table, 1, 0, "Value", text_color=color.black, bgcolor=color.gray, text_size=size.small)
+    table.cell(performance_table, 2, 0, "Status", text_color=color.black, bgcolor=color.gray, text_size=size.small)
+    
+    // Performance metrics
+    net_profit = strategy.netprofit
+    total_trades = strategy.closedtrades
+    win_rate = strategy.wintrades > 0 ? (strategy.wintrades / total_trades) * 100 : 0
+    profit_factor = strategy.grossloss != 0 ? strategy.grossprofit / math.abs(strategy.grossloss) : 0
+    max_dd = strategy.max_drawdown
+    
+    // Current market conditions
+    current_volatility = vol_ratio
+    current_correlation = avg_corr
+    
+    // Fill table
+    table.cell(performance_table, 0, 1, "Net Profit", text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 1, 1, str.tostring(net_profit, "#.##"), 
+               text_color=net_profit > 0 ? color.green : color.red, text_size=size.tiny)
+    table.cell(performance_table, 2, 1, net_profit > 0 ? "✓" : "✗", 
+               text_color=net_profit > 0 ? color.green : color.red, text_size=size.tiny)
+    
+    table.cell(performance_table, 0, 2, "Win Rate", text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 1, 2, str.tostring(win_rate, "#.#") + "%", text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 2, 2, win_rate > 50 ? "✓" : "✗", 
+               text_color=win_rate > 50 ? color.green : color.red, text_size=size.tiny)
+    
+    table.cell(performance_table, 0, 3, "Total Trades", text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 1, 3, str.tostring(total_trades), text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 2, 3, total_trades > 10 ? "✓" : "⚠", 
+               text_color=total_trades > 10 ? color.green : color.yellow, text_size=size.tiny)
+    
+    table.cell(performance_table, 0, 4, "Profit Factor", text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 1, 4, str.tostring(profit_factor, "#.##"), text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 2, 4, profit_factor > 1.5 ? "✓" : "✗", 
+               text_color=profit_factor > 1.5 ? color.green : color.red, text_size=size.tiny)
+    
+    table.cell(performance_table, 0, 5, "Max Drawdown", text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 1, 5, str.tostring(max_dd, "#.##") + "%", text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 2, 5, max_dd < -20 ? "✗" : "✓", 
+               text_color=max_dd < -20 ? color.red : color.green, text_size=size.tiny)
+    
+    table.cell(performance_table, 0, 6, "Consecutive Losses", text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 1, 6, str.tostring(consecutive_losses), text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 2, 6, consecutive_losses < max_consecutive_losses ? "✓" : "⚠", 
+               text_color=consecutive_losses < max_consecutive_losses ? color.green : color.red, text_size=size.tiny)
+    
+    table.cell(performance_table, 0, 7, "Volatility Ratio", text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 1, 7, str.tostring(current_volatility, "#.##"), text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 2, 7, current_volatility > 2.0 ? "⚠" : "✓", 
+               text_color=current_volatility > 2.0 ? color.yellow : color.green, text_size=size.tiny)
+    
+    table.cell(performance_table, 0, 8, "Avg Correlation", text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 1, 8, str.tostring(current_correlation, "#.##"), text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 2, 8, current_correlation < 0.8 ? "✓" : "⚠", 
+               text_color=current_correlation < 0.8 ? color.green : color.yellow, text_size=size.tiny)
+    
+    current_pos = strategy.position_size > 0 ? "Long" : strategy.position_size < 0 ? "Short" : "Flat"
+    table.cell(performance_table, 0, 9, "Position", text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 1, 9, current_pos, text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 2, 9, "○", text_color=color.blue, text_size=size.tiny)
+    
+    table.cell(performance_table, 0, 10, "Risk Management", text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 1, 10, risk_management_ok ? "Active" : "Disabled", text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 2, 10, risk_management_ok ? "✓" : "✗", 
+               text_color=risk_management_ok ? color.green : color.red, text_size=size.tiny)
+    
+    table.cell(performance_table, 0, 11, "Session Active", text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 1, 11, in_session ? "Yes" : "No", text_color=color.black, text_size=size.tiny)
+    table.cell(performance_table, 2, 11, in_session ? "✓" : "○", 
+               text_color=in_session ? color.green : color.gray, text_size=size.tiny)
+
+// =====================================================
+// ENHANCED ALERTS (v6 Features)
+// =====================================================
+
+// Complex alert conditions
+alertcondition(long_signal and risk_management_ok, 
+               title="Long Entry Alert", 
+               message="{{alert_message_prefix}}: Long entry signal at {{close}} | Vol Ratio: {{vol_ratio}} | Correlation: {{avg_corr}}")
+
+alertcondition(short_signal and risk_management_ok, 
+               title="Short Entry Alert", 
+               message="{{alert_message_prefix}}: Short entry signal at {{close}} | Vol Ratio: {{vol_ratio}} | Correlation: {{avg_corr}}")
+
+alertcondition(max_losses_reached, 
+               title="Max Losses Alert", 
+               message="{{alert_message_prefix}}: Maximum consecutive losses reached. Trading disabled.")
+
+alertcondition(vol_ratio > 2.5, 
+               title="High Volatility Alert", 
+               message="{{alert_message_prefix}}: Extreme volatility detected. Vol Ratio: {{vol_ratio}}")
+
+// =====================================================
+// COMMENTS AND NOTES
+// =====================================================
+
+// This strategy demonstrates PineScript v6 features:
+// 1. Enhanced input functions with grouping and tooltips
+// 2. Matrix data structures for complex calculations
+// 3. Improved correlation analysis
+// 4. Advanced alert system with dynamic messages
+// 5. Enhanced plotting with conditional colors
+// 6. Complex table structures for performance monitoring
+// 7. Advanced risk management with consecutive loss tracking
+// 8. Multi-timeframe analysis integration
+// 9. Dynamic position sizing based on market conditions
+// 10. Session and time filtering capabilities
+
+// =====================================================
+// END OF STRATEGY
+// =====================================================

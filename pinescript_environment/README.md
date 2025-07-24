@@ -83,7 +83,8 @@ pinescript_environment/
 
 ## 🎓 PineScript Version Support
 
-- **PineScript v5** - Full support (latest)
+- **PineScript v6** - Full support (latest) 🚀
+- **PineScript v5** - Full support
 - **PineScript v4** - Full support
 - **PineScript v3** - Legacy support
 - **PineScript v2** - Legacy support

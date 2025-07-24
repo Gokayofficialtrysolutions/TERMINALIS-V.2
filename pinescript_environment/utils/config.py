@@ -74,7 +74,7 @@ class PineScriptConfig:
     
     def __post_init__(self):
         if self.supported_versions is None:
-            self.supported_versions = ["v1", "v2", "v3", "v4", "v5"]
+            self.supported_versions = ["v1", "v2", "v3", "v4", "v5", "v6"]
 
 class ConfigManager:
     """
